@@ -1,0 +1,10 @@
+name = "telegram-storage-ui"
+compatibility_date = "2024-05-01"
+
+[env.production]
+kv_namespaces = [
+  { binding = "FILES", id = "e788910637d74e08aaa18e45fd96dbcf" }
+]
+
+[build]
+command = ""

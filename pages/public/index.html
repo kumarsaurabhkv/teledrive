@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Telegram Cloud Storage</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.5rem; border: 1px solid #ddd; }
+    button { margin-right: 0.3rem; }
+    .toast {
+      visibility: hidden; opacity: 0;
+      position: fixed; bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      background: #333; color: #fff;
+      padding: 0.5rem 1rem; border-radius: 4px;
+      transition: opacity 0.3s;
+    }
+    .toast.show { visibility: visible; opacity: 1; }
+  </style>
+</head>
+<body>
+  <h1>My Telegram Files</h1>
+  <table>
+    <thead><tr><th>ID</th><th>Uploaded</th><th>Actions</th></tr></thead>
+    <tbody id="file-list"><tr><td colspan="3">Loading...</td></tr></tbody>
+  </table>
+  <div class="toast" id="toast">Link copied</div>
+
+  <script>
+    async function loadFiles() {
+      const res = await fetch('/api/list-files');
+      const files = await res.json();
+      const tbody = document.getElementById('file-list');
+      tbody.innerHTML = '';
+      files.forEach(file => {
+        const tr = document.createElement('tr');
+        const time = new Date(file.timestamp).toLocaleString();
+        tr.innerHTML = `
+          <td>${file.fileId}</td>
+          <td>${time}</td>
+          <td>
+            <button onclick="download('${file.fileId}')">Download</button>
+            <button onclick="share('${file.fileId}')">Share</button>
+            <button onclick="remove('${file.fileId}', this)">Delete</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function download(id) {
+      location.href = '/get-file?id=' + id;
+    }
+
+    function share(id) {
+      const url = location.origin + '/get-file?id=' + id;
+      navigator.clipboard.writeText(url);
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    async function remove(id, btn) {
+      const confirmDelete = confirm('Are you sure?');
+      if (!confirmDelete) return;
+      await fetch('/api/delete-file?id=' + id, { method: 'DELETE' });
+      btn.closest('tr').remove();
+    }
+
+    loadFiles();
+  </script>
+</body>
+</html>
